@@ -3,8 +3,12 @@
 /timeplt.zip
 *.rom
 /build/
-/artifacts/
 /ref/
+
+# MAME-derived analysis output: state dumps hold video/sprite RAM contents and
+# the snapshots are renders of ROM graphics. All of it regenerates in seconds
+# from the user's own romset with tools/capture_states.sh.
+/artifacts*/
 
 # The bootstrap methodology guide is reference-only, not part of the core
 /METHODOLOGY.md
@@ -90,6 +94,3 @@ _tmp
 # --- Python ---
 __pycache__/
 *.pyc
-
-# --- MAME-derived analysis outputs (states, snapshots, recordings) ---
-/artifacts*/
