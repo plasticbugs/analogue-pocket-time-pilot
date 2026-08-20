@@ -45,7 +45,9 @@ module timeplt_main (
     // ---- diagnostics ------------------------------------------------------
     output wire        dbg_spr_overrun,
     output logic       dbg_watchdog,   //! sticky: the watchdog fired
-    output wire [15:0] dbg_pc
+    output wire [15:0] dbg_pc,
+    output logic [15:0] dbg_snd_cmds,  //! sound commands written to C000
+    output logic [15:0] dbg_snd_irqs   //! LS259 Q2 rising edges
 );
 
     // ------------------------------------------------------------- CPU clock
@@ -201,6 +203,8 @@ module timeplt_main (
     always_ff @(posedge clk) begin
         q2_prev <= latch[2];
         snd_irq <= latch[2] && !q2_prev;
+        if (reset) dbg_snd_irqs <= 16'd0;
+        else if (latch[2] && !q2_prev) dbg_snd_irqs <= dbg_snd_irqs + 16'd1;
     end
 
     // ------------------------------------------------------- sound command
@@ -209,6 +213,8 @@ module timeplt_main (
     always_ff @(posedge clk) begin
         snd_wr_q <= snd_wr;
         if (snd_wr && !snd_wr_q) snd_data <= cpu_do;
+        if (reset) dbg_snd_cmds <= 16'd0;
+        else if (snd_wr && !snd_wr_q) dbg_snd_cmds <= dbg_snd_cmds + 16'd1;
     end
 
     // ------------------------------------------------------------------ NMI

@@ -48,7 +48,15 @@ module timeplt_core (
     output wire        dbg_watchdog,
     output wire [15:0] dbg_pc,
     output wire  [7:0] dbg_snd_timer,
-    output wire [15:0] dbg_snd_filter
+    output wire [15:0] dbg_snd_filter,
+    output wire [15:0] dbg_snd_pc,
+    output wire [15:0] dbg_ay_writes,
+    output wire [15:0] dbg_irqs,
+    output wire  [7:0] dbg_ch0,
+    output wire [15:0] dbg_snd_cmds,
+    output wire [15:0] dbg_main_snd_irqs,
+    output wire        dbg_irq_pending,
+    output wire        dbg_int_ack
 );
 
     wire [7:0] snd_data;
@@ -81,7 +89,9 @@ module timeplt_core (
         .vblank_rise_o   (vblank_rise),
         .dbg_spr_overrun (dbg_spr_overrun),
         .dbg_watchdog    (dbg_watchdog),
-        .dbg_pc          (dbg_pc)
+        .dbg_pc          (dbg_pc),
+        .dbg_snd_cmds    (dbg_snd_cmds),
+        .dbg_snd_irqs    (dbg_main_snd_irqs)
     );
 
     timeplt_sound u_sound (
@@ -96,8 +106,14 @@ module timeplt_core (
         .dl_we      (dl_we),
         .audio      (audio),
         .audio_ce   (audio_ce),
-        .dbg_timer  (dbg_snd_timer),
-        .dbg_filter (dbg_snd_filter)
+        .dbg_timer     (dbg_snd_timer),
+        .dbg_filter    (dbg_snd_filter),
+        .dbg_pc        (dbg_snd_pc),
+        .dbg_ay_writes (dbg_ay_writes),
+        .dbg_irqs      (dbg_irqs),
+        .dbg_ch0       (dbg_ch0),
+        .dbg_irq_pending (dbg_irq_pending),
+        .dbg_int_ack     (dbg_int_ack)
     );
 
 endmodule

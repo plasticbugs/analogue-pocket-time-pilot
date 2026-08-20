@@ -87,3 +87,48 @@ is what the hardware does and what makes the cloud multiplex land correctly.
 MAME samples sprite RAM at the end of the line it is drawing. The two can differ
 by one line on the exact frame a cloud is repositioned. Frozen states are
 unaffected, and the full-system comparison above has not shown it.
+
+## 4. Audio — `sim/run_sound.sh` and `sim/run_audio.sh`
+
+`sim/run_sound.sh <cmd>` drives the sound board in isolation: it writes a
+command byte into the latch and pulses the IRQ exactly as the main board does,
+then records what comes out. `tools/sndcmd.lua` makes MAME play the *same*
+command with the main CPU parked, so the two recordings are of the same event.
+`tools/compare_audio.py` box-decimates both to 8 kHz — which also discards the
+ultrasonic square-wave harmonics MAME's resampler has already removed — and
+reports DC-removed RMS plus band energies.
+
+Reading the result matters: a **flat** ratio across the bands is a level error,
+a **sloping** one is a filter error. The first measurement came back 21 dB down
+with a ratio of 0.08-0.12 across 100 Hz to 4 kHz — dead flat, so the RC filters
+were already right and only the output gain was wrong. `OUT_GAIN` in
+`rtl/timeplt_sound.sv` was set from that measurement.
+
+Current status:
+
+| window | core / MAME RMS |
+|---|---|
+| command 0x01, isolated | 1.00 (0.00 dB) |
+| command 0x05, isolated | 0.99 |
+| command 0x0A, isolated | 1.15 |
+| command 0x10, isolated | 1.14 |
+| 3 s of gameplay, frames 700-900 | 0.99 (-0.11 dB) |
+
+`sim/run_audio.sh <first_frame> <last_frame>` records the whole machine over a
+window given in **frames**, not seconds: the core runs at 60.606 Hz and MAME's
+driver at 60.000 Hz, so a window in seconds would slide 1% against MAME's
+recording and compare different music.
+
+### The bug this found
+
+The sound board was completely silent. Booting the whole game to reach a point
+where it plays takes minutes per run, so the board was lifted out into its own
+bench and given counters. That showed the main board raising the IRQ correctly
+and the sound Z80 never acknowledging it, with a PC histogram parked in the
+boot-time RAM clear loop.
+
+The cause was the memory decode: the unpopulated `1000-2FFF` window was written
+as `cpu_a[15:14] == 2'b00 && !sel_rom`, which also covers `3000-3FFF` — the work
+RAM — and it was tested before the RAM in the read mux. Every RAM read returned
+zero, so the first `RET` popped `0x0000` and the CPU restarted its boot loop
+forever, never reaching the `EI`.

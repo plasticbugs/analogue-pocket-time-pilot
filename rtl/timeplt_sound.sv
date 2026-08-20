@@ -43,7 +43,13 @@ module timeplt_sound (
 
     // ---- diagnostics ------------------------------------------------------
     output wire  [7:0] dbg_timer,
-    output wire [15:0] dbg_filter
+    output wire [15:0] dbg_filter,
+    output wire [15:0] dbg_pc,
+    output logic [15:0] dbg_ay_writes,  //! AY register writes since reset
+    output logic [15:0] dbg_irqs,       //! IRQ acknowledges seen since reset
+    output wire  [7:0] dbg_ch0,
+    output wire        dbg_irq_pending,
+    output wire        dbg_int_ack
 );
 
     // ------------------------------------------------- 1.789772 MHz enable
@@ -87,6 +93,8 @@ module timeplt_sound (
 
     wire mem    = ~cpu_mreq_n && cpu_rfsh_n;
     wire mem_wr = mem && ~cpu_wr_n;
+    assign dbg_pc  = cpu_a;
+    assign dbg_ch0 = ay1_a;
 
     // IM1 IRQ, held until the CPU acknowledges it (MAME's HOLD_LINE)
     wire int_ack = ~cpu_m1_n && ~cpu_iorq_n;
@@ -97,10 +105,29 @@ module timeplt_sound (
         else if (int_ack) irq_req <= 1'b0;
     end
     assign irq_n = ~irq_req;
+    assign dbg_irq_pending = irq_req;
+    assign dbg_int_ack     = int_ack;
+
+    logic mem_wr_q, int_ack_q;
+    always_ff @(posedge clk) begin
+        mem_wr_q  <= mem_wr;
+        int_ack_q <= int_ack;
+        if (reset) begin
+            dbg_ay_writes <= 16'd0;
+            dbg_irqs      <= 16'd0;
+        end else begin
+            if (mem_wr && !mem_wr_q && (sel_ay1d || sel_ay2d)) dbg_ay_writes <= dbg_ay_writes + 16'd1;
+            if (int_ack && !int_ack_q)                          dbg_irqs      <= dbg_irqs + 16'd1;
+        end
+    end
 
     // ------------------------------------------------------------- decode
     wire sel_rom  = (cpu_a[15:12] == 4'h0);                 // 0000-0FFF (4 KB)
-    wire sel_dead = (cpu_a[15:14] == 2'b00) && !sel_rom;    // 1000-2FFF: reads 0
+    // 1000-2FFF is inside MAME's ROM region but nothing is loaded there, so it
+    // reads 0. Note this must NOT reach 3000: that is the work RAM, and having
+    // it shadowed here made every RAM read return 0, so RET popped 0x0000 and
+    // the sound CPU restarted its boot loop forever.
+    wire sel_dead = (cpu_a[15:12] == 4'h1) || (cpu_a[15:12] == 4'h2);
     wire sel_ram  = (cpu_a[15:12] == 4'h3);                 // 3000-3FFF, 1 KB mirrored
     wire sel_ay1d = (cpu_a[15:12] == 4'h4);
     wire sel_ay1a = (cpu_a[15:12] == 4'h5);
@@ -276,37 +303,43 @@ module timeplt_sound (
     endgenerate
 
     // ------------------------------------------------------------------ mix
-    // Six unipolar Q8 channels summed, then DC-blocked. The absolute level is
-    // set by OUT_SHIFT, calibrated against MAME (sim/tb_audio.cpp).
-    logic signed [19:0] mix;
+    // Six unipolar Q8 channels summed: 0 .. 6*65535, i.e. 0 .. 1536 in the
+    // AY's own 0..255-per-channel units.
+    logic [18:0] mix;
     always_ff @(posedge clk) if (cen_fs)
-        mix <= $signed({4'd0, f_out[0]}) + $signed({4'd0, f_out[1]})
-             + $signed({4'd0, f_out[2]}) + $signed({4'd0, f_out[3]})
-             + $signed({4'd0, f_out[4]}) + $signed({4'd0, f_out[5]});
+        mix <= {3'd0, f_out[0]} + {3'd0, f_out[1]} + {3'd0, f_out[2]}
+             + {3'd0, f_out[3]} + {3'd0, f_out[4]} + {3'd0, f_out[5]};
 
-    // one-pole DC blocker, corner around 20 Hz at the mix rate
-    logic signed [31:0] dc_acc;
-    logic signed [19:0] dc_out;
+    // DC blocker: leaky integrator estimating the mean, tau = 4096 samples at
+    // 223.7 kHz, so a corner near 9 Hz. The integrator holds 4096 * mean, whose
+    // maximum is 4096 * 393210 = 1.61e9 and so fits a signed 32-bit word.
+    logic signed [31:0] dc_int;
+    logic signed [20:0] ac;
+    wire  signed [20:0] x = {2'b00, mix};
     always_ff @(posedge clk) begin
         if (reset) begin
-            dc_acc <= 32'sd0;
-            dc_out <= 20'sd0;
+            dc_int <= 32'sd0;
+            ac     <= 21'sd0;
         end else if (cen_fs) begin
-            dc_acc <= dc_acc + (((({{12{mix[19]}}, mix}) <<< 12) - dc_acc) >>> 13);
-            dc_out <= mix - dc_acc[31:12];
+            dc_int <= dc_int + ({{11{x[20]}}, x} - (dc_int >>> 12));
+            ac     <= x - dc_int[31:12];
         end
     end
 
-    localparam int OUT_SHIFT = 4;
+    // Output gain, calibrated against MAME over a matched window
+    // (sim/run_sound.sh + tools/sndcmd.lua; see docs/verification.md).
+    localparam [15:0] OUT_GAIN = 16'd16922;   // ac * GAIN >> 16
+    wire signed [37:0] scaled = ac * $signed({1'b0, OUT_GAIN});
+
     always_ff @(posedge clk) begin
         if (reset || snd_mute) audio <= 16'sd0;
-        else if (cen_fs)       audio <= clamp16({{4{dc_out[19]}}, dc_out} <<< OUT_SHIFT);
+        else if (cen_fs)       audio <= clamp16(scaled[37:16]);
     end
 
-    function automatic signed [15:0] clamp16(input signed [23:0] v);
-        if (v > 24'sh007fff)       clamp16 = 16'sh7fff;
-        else if (v < -24'sh008000) clamp16 = 16'sh8000;
-        else                       clamp16 = v[15:0];
+    function automatic signed [15:0] clamp16(input signed [21:0] v);
+        if (v > 22'sh00_7fff)       clamp16 = 16'sh7fff;
+        else if (v < -22'sh00_8000) clamp16 = 16'sh8000;
+        else                        clamp16 = v[15:0];
     endfunction
 
 endmodule
