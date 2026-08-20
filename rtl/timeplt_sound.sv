@@ -55,11 +55,16 @@ module timeplt_sound (
     // ------------------------------------------------- 1.789772 MHz enable
     // 2^24 * 1789772 / 49152000 = 610908.6; 610909 gives 1789774.5 Hz, +0.8 ppm.
     localparam [24:0] ACC_STEP = 25'd610909;
-    logic [24:0] acc = 25'd0;
+    logic [24:0] acc;
     logic        cen_snd;
     always_ff @(posedge clk) begin
-        acc     <= {1'b0, acc[23:0]} + ACC_STEP;
-        cen_snd <= acc[24];
+        if (reset) begin
+            acc     <= 25'd0;
+            cen_snd <= 1'b0;
+        end else begin
+            acc     <= {1'b0, acc[23:0]} + ACC_STEP;
+            cen_snd <= acc[24];
+        end
     end
     wire cen = cen_snd && !pause && !dl_we;
 

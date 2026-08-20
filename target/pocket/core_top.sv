@@ -857,8 +857,12 @@ module core_top
     //! IN0: 0 coin1, 1 coin2, 2 service, 3 start1, 4 start2, 5-7 unused
     //! IN1: 0 left, 1 right, 2 up, 3 down, 4 fire, 5-7 unused
     //! All active low.
+    //! 2 player start needs a button of its own. m_start2 comes from a SECOND
+    //! physical controller, which a handheld does not have, so Y on pad 1 is
+    //! ORed in -- otherwise the cabinet's 2P start is unreachable and the game
+    //! can only ever be played one-up.
     wire [7:0] tp_in0 = ~{ 3'b000,
-                           m_start2,
+                           m_start2 | m_btn1,
                            m_start1,
                            svc_sw,
                            m_coin2,
@@ -869,7 +873,16 @@ module core_top
                            (m_btn2 | m_btn3),
                            m_down, m_up, m_right, m_left };
 
-    wire [7:0] tp_in2 = 8'hff;   // cocktail player 2, unused on a handheld
+    //! Player 2's controls, mirrored onto the same pad.
+    //!
+    //! The game picks its input port at 0x1ED1: it reads IN1 unless the screen
+    //! is flipped, and the screen only flips in cocktail mode on player 2's
+    //! turn. So with the cabinet DIP on Upright -- the default -- alternating
+    //! two-player already runs entirely on these controls and the console can
+    //! just be handed over. Mirroring IN1 here costs nothing and means cocktail
+    //! mode is playable on one pad too, with the picture inverted on P2's turn
+    //! exactly as the real cabinet does it.
+    wire [7:0] tp_in2 = tp_in1;
 
     //! DIP switches. The Interact menu switches are XORed onto the factory
     //! defaults so 0 always means "as the machine shipped".

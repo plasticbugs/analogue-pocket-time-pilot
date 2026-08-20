@@ -8,7 +8,7 @@ FRAMES=${FRAMES:-"180 420 900 1500 2100 2700 3300 3900"}
 rm -rf "$OUT"; mkdir -p "$OUT" build/mamecfg
 for f in $FRAMES; do
     tag=$(printf "%04d" "$f")
-    TP_OUT="$OUT" TP_FRAME="$f" TP_TAG="$tag" \
+    TP_OUT="$OUT" TP_FRAME="$f" TP_TAG="$tag" TP_MODE="${TP_MODE:-1p}" \
     mame timeplt -rompath . -video none -sound none -nothrottle -skip_gameinfo \
         -snapshot_directory "$OUT/snap_$tag" -cfg_directory build/mamecfg \
         -nvram_directory build/mamecfg -autoboot_script tools/dumpstate.lua \

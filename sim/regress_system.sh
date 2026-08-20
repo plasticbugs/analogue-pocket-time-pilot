@@ -30,5 +30,20 @@ for f in $FRAMES; do
     python3 tools/diff_state.py "$OUT/state_$tag.txt" "build/sys_$tag.txt" || fail=1
     python3 tools/diff_frames.py "build/sys_$tag.ppm" "$OUT/mame_$tag.png" "build/sys_${tag}_diff.png" || fail=1
 done
+
+# Two-player start is a separate input path -- IN0 bit 4 rather than bit 3 --
+# and a wrong bit there would not show up in any of the runs above, because
+# nothing in them ever presses it.
+OUT2P=${OUT2P:-artifacts_2p}
+FRAMES2P=${FRAMES2P:-"900 1500"}
+if [ "$1" != "-nomame" ]; then
+    TP_MODE=2p OUT="$OUT2P" FRAMES="$FRAMES2P" ./tools/capture_states.sh
+fi
+for f in $FRAMES2P; do
+    tag=$(printf "%04d" "$f")
+    "$BUILD/tb_system" build/timeplt.rom "$f" "build/2p_$tag.ppm" -ram "build/2p_$tag.txt" -2p -quiet
+    python3 tools/diff_state.py "$OUT2P/state_$tag.txt" "build/2p_$tag.txt" || fail=1
+    python3 tools/diff_frames.py "build/2p_$tag.ppm" "$OUT2P/mame_$tag.png" "build/2p_${tag}_diff.png" || fail=1
+done
 [ $fail -eq 0 ] && echo "system matches MAME on every frame" || echo "FAILURES"
 exit $fail

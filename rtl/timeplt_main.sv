@@ -52,8 +52,8 @@ module timeplt_main (
 
     // ------------------------------------------------------------- CPU clock
     // 49.152 / 16 = 3.072 MHz exactly.
-    logic [3:0] cpu_div = 4'd0;
-    always_ff @(posedge clk) cpu_div <= cpu_div + 4'd1;
+    logic [3:0] cpu_div;
+    always_ff @(posedge clk) cpu_div <= reset ? 4'd0 : (cpu_div + 4'd1);
     wire cpu_cen = (cpu_div == 4'd15) && !pause && !dl_we;
 
     // ------------------------------------------------------------------ CPU

@@ -51,12 +51,19 @@ static std::vector<unsigned char> load_rom(const char *path) {
 // (see docs/verification.md). The skew is applied to both the stop point and
 // the input schedule so "frame N" means the same game state on both sides.
 static const int FRAME_SKEW = 2;
+static bool two_player = false;   // -2p: coin twice, then 2 player start
 
 // scripted inputs, matched to tools/dumpstate.lua
 static void set_inputs(int frame) {
     unsigned in0 = 0xff, in1 = 0xff;
-    if (frame >= 600 && frame < 604) in0 &= ~0x01u;   // coin 1
-    if (frame >= 660 && frame < 664) in0 &= ~0x08u;   // start 1
+    if (two_player) {
+        if ((frame >= 600 && frame < 604) || (frame >= 620 && frame < 624))
+            in0 &= ~0x01u;                            // coin 1, twice
+        if (frame >= 660 && frame < 664) in0 &= ~0x10u;   // 2 player start
+    } else {
+        if (frame >= 600 && frame < 604) in0 &= ~0x01u;   // coin 1
+        if (frame >= 660 && frame < 664) in0 &= ~0x08u;   // 1 player start
+    }
     if (frame > 700) {
         in1 &= ~0x10u;                                 // fire
         if ((frame / 60) % 2 == 0) in1 &= ~0x02u;      // right
@@ -89,6 +96,7 @@ int main(int argc, char **argv) {
     bool quiet = false;
     for (int i = 4; i < argc; i++) {
         if (!strcmp(argv[i], "-ram") && i + 1 < argc) ram_path = argv[++i];
+        else if (!strcmp(argv[i], "-2p")) two_player = true;
         else if (!strcmp(argv[i], "-quiet")) quiet = true;
     }
 

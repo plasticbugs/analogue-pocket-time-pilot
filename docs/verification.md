@@ -65,6 +65,13 @@ sides. Before it was applied the two drifted apart during play, because the
 scripted inputs landed two frames out and the game legitimately went somewhere
 else.
 
+### The two-player path is checked separately
+
+Two player start is IN0 bit 4, not bit 3, and nothing in the ordinary run ever
+presses it — a wrong bit there would sail through every other gate. So the
+regression also plays a scripted two-player game (coin twice, then 2P start)
+and compares that against MAME the same way. Both frames are byte-identical.
+
 ### What is deliberately not compared
 
 Work RAM `0xAFE0-0xAFFF` is stack. The two benches stop the CPU at different

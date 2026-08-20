@@ -36,7 +36,20 @@ every access is single cycle and deterministic.
 | Move | D-pad (8 directions) |
 | Fire | B or A |
 | Insert coin | Select |
-| Start | Start |
+| 1 player start | Start |
+| 2 player start | Y |
+
+The cabinet has both start buttons and Time Pilot alternates turns, so 2 player
+start is worth having. It needs a button of its own: the platform's `m_start2`
+comes from a *second physical controller*, which a handheld does not have.
+
+**Two players on one Pocket.** With the cabinet DIP on Upright — the default —
+just hand the console over between turns. The game picks its input port at
+`0x1ED1`: it reads IN1 unless the screen is flipped, and the screen only flips
+in cocktail mode on player 2's turn. So both players are already on the same
+controls. IN2 is mirrored from IN1 anyway, which makes cocktail mode playable
+on one pad too, with the picture inverted on P2's turn as the real cabinet
+does it.
 
 DIP switches — lives, bonus life, difficulty, demo sounds, free play — are in
 the Pocket's Interact menu, along with the screen shape below.

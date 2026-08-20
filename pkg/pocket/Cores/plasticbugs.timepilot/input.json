@@ -6,23 +6,28 @@
                 "type": "default",
                 "mappings": [
                     {
-                        "id": 30,
+                        "id": 40,
                         "name": "Fire",
                         "key": "pad_btn_b"
                     },
                     {
-                        "id": 31,
+                        "id": 41,
                         "name": "Fire (alt)",
                         "key": "pad_btn_a"
                     },
                     {
-                        "id": 32,
+                        "id": 42,
+                        "name": "2 Player Start",
+                        "key": "pad_btn_y"
+                    },
+                    {
+                        "id": 43,
                         "name": "Coin",
                         "key": "pad_btn_select"
                     },
                     {
-                        "id": 33,
-                        "name": "Start",
+                        "id": 44,
+                        "name": "1 Player Start",
                         "key": "pad_btn_start"
                     }
                 ]

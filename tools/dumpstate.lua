@@ -26,6 +26,22 @@ local function field(port, name)
 end
 local coin  = field(":IN0", "Coin 1")
 local st1   = field(":IN0", "1 Player Start")
+-- MAME's name for IPT_START2 has moved around between versions, so find it
+-- rather than hard-coding it: a wrong name silently yields nil and the test
+-- would pass while pressing nothing.
+local st2
+do
+    local p = ports[":IN0"]
+    if p then
+        for name, f in pairs(p.fields) do
+            if name:find("2 Player") then st2 = f end
+        end
+    end
+    if not st2 then print("[tp] WARNING: no 2-player start field found in IN0") end
+end
+
+-- TP_MODE=2p coins twice and presses 2 player start instead of 1 player start
+local TWO_PLAYER = (os.getenv("TP_MODE") == "2p")
 local fire  = field(":IN1", "P1 Button 1")
 local left  = field(":IN1", "P1 Left")
 local right = field(":IN1", "P1 Right")
@@ -88,8 +104,13 @@ emu.register_frame_done(function()
         return
     end
     -- deterministic run-in: coin, start, then wiggle so the screen gets busy
-    hold(coin, frame >= 600 and frame < 604)
-    hold(st1,  frame >= 660 and frame < 664)
+    if TWO_PLAYER then
+        hold(coin, (frame >= 600 and frame < 604) or (frame >= 620 and frame < 624))
+        hold(st2,  frame >= 660 and frame < 664)
+    else
+        hold(coin, frame >= 600 and frame < 604)
+        hold(st1,  frame >= 660 and frame < 664)
+    end
     if frame > 700 then
         hold(fire, true)
         hold(right, (frame // 60) % 2 == 0)

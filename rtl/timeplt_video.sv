@@ -113,9 +113,9 @@ module timeplt_video (
     localparam int VVIS1  = 495;        // low byte 239
     localparam int VS_BEG = 500, VS_END = 502;
 
-    logic [2:0] phase = 3'd0;
-    logic [8:0] hcnt  = 9'd0;
-    logic [8:0] vcnt  = VFIRST[8:0];
+    logic [2:0] phase;
+    logic [8:0] hcnt;
+    logic [8:0] vcnt;
 
     assign ce_pix = (phase == 3'd7);
 
@@ -283,7 +283,7 @@ module timeplt_video (
     localparam [2:0] S_IDLE = 3'd0, S_A0 = 3'd1, S_A1 = 3'd2, S_A2 = 3'd3,
                      S_CHK  = 3'd4, S_G0 = 3'd5, S_G1 = 3'd6, S_PX = 3'd7;
 
-    logic [2:0] st = S_IDLE;
+    logic [2:0] st;
     logic [5:0] offs;
     logic [7:0] s_sx, s_code, s_attr, s_ysrc, s_byte;
     logic [3:0] s_row;

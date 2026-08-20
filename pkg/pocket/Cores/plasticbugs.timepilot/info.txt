@@ -28,4 +28,5 @@ mra tool? Point it at timeplt.mra.
 Controls
 * Fire: B or A
 * Insert coin: Select
-* Start: Start
+* 1 player start: Start
+* 2 player start: Y
