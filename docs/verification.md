@@ -132,3 +132,50 @@ as `cpu_a[15:14] == 2'b00 && !sel_rom`, which also covers `3000-3FFF` — the wo
 RAM — and it was tested before the RAM in the read mux. Every RAM read returned
 zero, so the first `RET` popped `0x0000` and the CPU restarted its boot loop
 forever, never reaching the `EI`.
+
+## 5. Synthesis — `./build-local.sh map` and `./build-local.sh`
+
+`quartus_map` alone takes about a minute and catches syntax and inference
+errors without paying for a fit. It is worth running before every push: it
+already caught one error that no amount of Verilator linting would have, because
+Verilator does not have the limit — the block RAM zero-initialiser was a `for`
+loop, and Quartus caps constant loops at 5000 iterations while the program ROM
+is 32768 words.
+
+Full compile, Quartus 18.1, 5CEBA4F23C8:
+
+| resource | used | available |
+|---|---|---|
+| Logic (ALMs) | 4,527 | 18,480 (24%) |
+| Registers | 6,106 | |
+| Block memory | 570,817 bits | 3,153,920 (18%) |
+| RAM blocks | 80 | 308 (26%) |
+| DSP blocks | 15 | 66 (23%) |
+| PLLs | 2 | 4 |
+
+Timing closes with margin: every one of the 104 setup and hold corners has
+positive slack, the worst being +0.126 ns on a hold path and +6.137 ns setup on
+the 49.152 MHz system clock.
+
+## 6. What still needs real hardware
+
+Everything above is simulation against MAME. These cannot be settled without a
+Pocket:
+
+* **Screen orientation and aspect.** `video.json` declares rotation 90
+  (clockwise) with a 3:4 aspect. The rotation direction is known to be right —
+  the same rotation makes the renders match MAME's snapshots pixel for pixel —
+  but how the scaler fits a 3:4 image to the panel is worth looking at.
+* **Icon and banner colour order.** Analogue documents the 16-bit assets as
+  BGRA5551 but the field order only shows up on hardware, so
+  `tools/make_images.py` draws both in greys and white: with r == g == b the two
+  candidate orders are indistinguishable. Colour can be added once the order is
+  confirmed.
+* **`display_modes` id `0x10`.** Carried over from a working core; not verified
+  for this one.
+* **Input remapping.** The `input.json` entry ids are fresh, so no saved
+  `input_persist.json` from another layout can override them — but that is only
+  provable on a unit that has never seen this core.
+* **The watchdog.** It resets the CPU after 1.37 s without a kick. The flag has
+  stayed clear across every simulation run including 25 seconds of play, but
+  only hardware will show whether anything in a real session ever gets close.

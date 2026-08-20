@@ -67,6 +67,13 @@ Decode of the mirrors, expressed as "care" bits:
 | 6 | coin counter 2 | |
 | 7 | "PAY OUT" — unused | |
 
+The board also has a watchdog, kicked by any write to the C200 group. MAME's
+`WATCHDOG_TIMER` is configured with neither a time nor a vblank count, so MAME
+never actually fires it; the core implements one with a 1.37 s timeout (2^22
+CPU cycles) that resets the CPU and clears this latch. The game kicks it at
+least once per frame from the NMI, an 80x margin, and it stops counting while
+the core is paused.
+
 ### Interrupts [MAME]
 
 Main CPU: NMI at vblank, gated by LS259 Q0. Vector 0x66 (Z80 NMI).

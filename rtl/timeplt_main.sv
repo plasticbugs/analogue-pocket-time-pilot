@@ -57,6 +57,7 @@ module timeplt_main (
     wire cpu_cen = (cpu_div == 4'd15) && !pause && !dl_we;
 
     // ------------------------------------------------------------------ CPU
+    wire        cpu_reset;      // external reset or a watchdog timeout
     wire [15:0] cpu_a;
     wire  [7:0] cpu_do;
     logic [7:0] cpu_di;
@@ -64,7 +65,7 @@ module timeplt_main (
     logic       nmi_n;
 
     tv80s_cen u_cpu (
-        .reset_n (~reset),
+        .reset_n (~cpu_reset),
         .clk     (clk),
         .cen     (cpu_cen),
         .wait_n  (1'b1),
@@ -187,7 +188,7 @@ module timeplt_main (
     wire        latch_wr = io_latch && mem_wr;
 
     always_ff @(posedge clk) begin
-        if (reset) begin
+        if (cpu_reset) begin
             latch <= 8'h00;
         end else if (latch_wr && !latch_wr_q) begin
             latch[cpu_a[3:1]] <= cpu_do[0];
@@ -221,26 +222,46 @@ module timeplt_main (
     // it, which is exactly what the handler does on entry.
     logic nmi_req;
     always_ff @(posedge clk) begin
-        if (reset)          nmi_req <= 1'b0;
+        if (cpu_reset)      nmi_req <= 1'b0;
         else if (!latch[0]) nmi_req <= 1'b0;
         else if (vblank_rise) nmi_req <= 1'b1;
     end
     assign nmi_n = ~nmi_req;
 
     // ------------------------------------------------------------ watchdog
-    // Kicked by any write to the C200 group. The game kicks it at least once a
-    // frame, so a 1.4 s timeout has an 80x margin over normal operation.
+    // Kicked by any write to the C200 group; on expiry it resets the CPU and
+    // the control latch, which is what the board does. The game kicks it at
+    // least once per frame, so 2^22 CPU cycles (1.37 s) leaves an 80x margin --
+    // and the flag below has stayed clear across every full-system run,
+    // including 25 seconds of play, so that margin is measured rather than
+    // assumed. It stops counting while the core is paused, so sitting in the
+    // Analogue OS menu cannot trip it.
     logic [21:0] wdog;
-    wire         wdog_kick = (io_c200 && mem_wr) || reset || dl_we;
+    logic  [7:0] wdog_hold;      // reset pulse, 255 clk_sys cycles = 16 CPU clocks
+    wire         wdog_kick = (io_c200 && mem_wr) || dl_we;
+
     always_ff @(posedge clk) begin
-        if (wdog_kick) begin
-            wdog <= 22'd0;
-        end else if (cpu_cen) begin
-            if (&wdog) dbg_watchdog <= 1'b1;
-            else       wdog <= wdog + 22'd1;
+        if (reset) begin
+            wdog         <= 22'd0;
+            wdog_hold    <= 8'd0;
+            dbg_watchdog <= 1'b0;
+        end else begin
+            if (wdog_hold != 8'd0) wdog_hold <= wdog_hold - 8'd1;
+            if (wdog_kick) begin
+                wdog <= 22'd0;
+            end else if (cpu_cen) begin
+                if (&wdog) begin
+                    wdog         <= 22'd0;
+                    wdog_hold    <= 8'hff;
+                    dbg_watchdog <= 1'b1;      // sticky, for the overlay
+                end else begin
+                    wdog <= wdog + 22'd1;
+                end
+            end
         end
-        if (reset) dbg_watchdog <= 1'b0;
     end
+
+    assign cpu_reset = reset || (wdog_hold != 8'd0);
 
 endmodule
 
