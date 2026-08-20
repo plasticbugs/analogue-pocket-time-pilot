@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Generate the Pocket core icon and platform banner.
+"""Generate PLACEHOLDER Pocket artwork -- the shipped assets are hand-made.
 
-Both are raw 16-bit images: the icon is 36x36 and the platform banner 521x165,
-five bits per gun with the top bit unused. Analogue documents the layout as
-BGRA5551, but the field order is easy to get wrong and only shows up on
-hardware, so these designs are deliberately drawn in greys and white: with
-r == g == b the two candidate orders produce identical output. Colour can be
-added once the order has been confirmed on a real unit.
+Superseded: pkg/pocket/ now carries real artwork. This is kept because it
+documents the formats -- the icon is 36x36 and the platform banner 521x165, raw
+16-bit, five bits per gun with the top bit unused -- and because it is a quick
+way to produce stand-ins for a new core.
+
+It writes into build/ and never into pkg/, so running it cannot overwrite the
+real assets.
 
     tools/make_images.py
 """
@@ -99,8 +100,10 @@ def plane(img, x, y, s, c):
 
 
 def main():
-    core = os.path.join(ROOT, 'pkg', 'pocket', 'Cores', 'plasticbugs.timepilot')
-    plats = os.path.join(ROOT, 'pkg', 'pocket', 'Platforms', '_images')
+    # build/, never pkg/: the shipped artwork is hand-made and must not be
+    # clobbered by re-running this.
+    core = os.path.join(ROOT, 'build', 'placeholder_art')
+    plats = core
     os.makedirs(core, exist_ok=True)
     os.makedirs(plats, exist_ok=True)
 

@@ -13,6 +13,11 @@
 # The bootstrap methodology guide is reference-only, not part of the core
 /METHODOLOGY.md
 
+# Loose source copies of the Pocket artwork dropped at the repo root. The
+# versions that ship live in pkg/pocket/, named for the platform id.
+/timeplt.bin
+/icon.bin
+
 # --- macOS ---
 .DS_Store
 **/.DS_Store
