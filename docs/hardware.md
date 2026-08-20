@@ -116,9 +116,19 @@ Factory default byte: DSW0 = 0xFF, DSW1 = 0x4B.
 
 ### Timing
 
-MAME models the screen as 256×256 @ 60 Hz with the visible area 0-255 × 16-239
-(224 lines) [MAME]. Real hardware [ASSUMED — the standard Konami/Galaxian-family
-chain] runs at the 6.144 MHz dot clock with:
+MAME's `timeplt` driver models the screen as 256×256 @ 60 Hz with the visible
+area 0-255 × 16-239 (224 lines) [MAME] — an approximation it never updated.
+Sibling drivers on the same Konami hardware carry the real numbers
+[VERIFIED — `konami/pooyan.cpp`, whose comment marks them as measured]:
+
+```
+screen.set_raw(18.432_MHz_XTAL / 3, 384, 0, 256, 264, 16, 240); // measured ~60.6Hz
+```
+
+`konami/tutankhm.cpp` uses the Galaxian-family constants, which are the same
+384/264. Time Pilot is the same manufacturer, the same year, the same master
+clock and the same visible window, and its own driver header says the sound
+board is "same as Pooyan", so the core uses:
 
 ```
 HTOTAL 384   H visible 0..255    (H blank 256..383)
@@ -420,9 +430,11 @@ commits with `LD (HL),A` — the *address* is the data. It always stays in
 
 ## 8. Open questions
 
-1. Real H/V timing — 384x264 @ 6.144 MHz is assumed from the Konami/Galaxian
-   family. Only the refresh rate depends on it; the CPU-visible scanline
-   counter is pinned by section 7.3.
+1. ~~Real H/V timing~~ — settled: 384x264 @ 6.144 MHz, from the measured
+   values in `konami/pooyan.cpp`. Note this makes the core run at 60.606 Hz
+   while MAME's `timeplt` runs at 60.000 Hz, so the two drift apart in raw
+   cycles; the game is frame-locked to the NMI, so its per-frame state is
+   unaffected.
 2. Sprite line buffer filled during the previous line — assumed (7.3).
 3. Flip screen: MAME flips the tilemap only (`flip_screen_set`), not the
    sprites, so cocktail mode is wrong in MAME. Real hardware flips both. The

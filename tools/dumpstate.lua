@@ -31,10 +31,13 @@ local left  = field(":IN1", "P1 Left")
 local right = field(":IN1", "P1 Right")
 
 local frame, frozen_at = 0, nil
+local park_save = {}          -- work RAM bytes the park stub overwrites
 
 local function hold(f, on) if f then f:set_value(on and 1 or 0) end end
 
 local function freeze()
+    park_save[0] = sp:read_u8(PARK)
+    park_save[1] = sp:read_u8(PARK + 1)
     sp:write_u8(PARK,     0x18)     -- JR $-2
     sp:write_u8(PARK + 1, 0xfe)
     cpu.state["PC"].value = PARK
@@ -58,6 +61,19 @@ local function dump()
     region("VIDEORAM",   0xa400, 0x400)
     region("SPRITERAM0", 0xb000, 0x100)
     region("SPRITERAM1", 0xb400, 0x100)
+    -- work RAM, with the park stub's two bytes put back so the dump describes
+    -- the machine as it was, not as the freeze left it
+    f:write("WORKRAM\n")
+    local line = {}
+    for i = 0, 0x7ff do
+        local a = 0xa800 + i
+        local v = sp:read_u8(a)
+        if a == PARK     then v = park_save[0] end
+        if a == PARK + 1 then v = park_save[1] end
+        line[#line + 1] = string.format("%02x", v)
+        if #line == 32 then f:write(table.concat(line), "\n"); line = {} end
+    end
+    if #line > 0 then f:write(table.concat(line), "\n") end
     f:write("END\n")
     f:close()
     mach.video:snapshot()
