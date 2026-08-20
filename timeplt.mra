@@ -1,0 +1,43 @@
+<misterromdescription>
+    <name>Time Pilot</name>
+    <setname>timeplt</setname>
+    <year>1982</year>
+    <manufacturer>Konami</manufacturer>
+    <category>Arcade</category>
+    <rbf>timeplt</rbf>
+
+    <!-- Flat 8-bit image. Every region is byte-wide, so no interleaving is
+         needed; the core copies each region into its own block RAM at load.
+
+           0x00000  24576  main CPU program   tm1 tm2 tm3
+           0x06000   4096  sound CPU program  tm7
+           0x07000   8192  tile gfx           tm6
+           0x09000  16384  sprite gfx         tm4 tm5
+           0x0D000     32  palette PROM       timeplt.b4
+           0x0D020     32  palette PROM       timeplt.b5
+           0x0D040    256  sprite colour LUT  timeplt.e9
+           0x0D140    256  char colour LUT    timeplt.e12
+           0x0D240        total
+    -->
+    <rom index="0" zip="timeplt.zip" md5="b7944f0805691ad3960ed26b703f8471">
+        <!-- main CPU -->
+        <part name="tm1" crc="1551f1b9"/>
+        <part name="tm2" crc="58636cb5"/>
+        <part name="tm3" crc="ff4e0d83"/>
+        <!-- sound CPU -->
+        <part name="tm7" crc="d66da813"/>
+        <!-- tiles -->
+        <part name="tm6" crc="c2507f40"/>
+        <!-- sprites -->
+        <part name="tm4" crc="7e437c3e"/>
+        <part name="tm5" crc="e8ca87b9"/>
+        <!-- PROMs -->
+        <part name="timeplt.b4"  crc="34c91839"/>
+        <part name="timeplt.b5"  crc="463b2b07"/>
+        <part name="timeplt.e9"  crc="4bbb2150"/>
+        <part name="timeplt.e12" crc="f7b7663e"/>
+    </rom>
+
+    <!-- Factory DIP defaults: DSW0 (SW1) = 0xFF, DSW1 (SW2) = 0x4B -->
+    <buttons names="Fire,Start 1P,Start 2P,Coin" default="B,Start,Select,A" count="1"/>
+</misterromdescription>
