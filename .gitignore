@@ -74,6 +74,8 @@ c5_pin_model_dump.txt
 cr_ie_info.json
 
 # --- Packaging / release staging ---
+# the SD-card zip is a build product; it belongs on a release, not in the tree
+/*-pocket-sdcard.zip
 /pkg/**/*.rom
 /pkg/**/*.zip
 /staging/*
