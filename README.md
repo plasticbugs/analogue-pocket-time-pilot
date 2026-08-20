@@ -50,17 +50,22 @@ rendering in the same coordinates the hardware used — which is what makes it
 possible to diff frames against MAME pixel for pixel.
 
 A vertical game cannot fill a screen that is wider than it is tall without
-being stretched, so **Screen Shape** in the Interact menu offers three
+being stretched, so **Screen Shape** in the Interact menu offers two
 presentations. The scaler reads the choice from `video_rgb[15:13]` every frame,
 so it switches live — no rebuild, no reboot.
 
-| | shape | on a 1600x1440 panel |
-|---|---|---|
-| **Arcade 3:4** (default) | a 4:3 cabinet monitor stood on its side | 1080x1440, black bars either side |
-| Square pixels 7:8 | 224x256 with genuinely square pixels | 1260x1440, narrower bars |
-| Fill screen | the panel's own shape | 1600x1440, stretched |
+| | what you get |
+|---|---|
+| **Arcade 3:4** (default) | the cabinet's shape, black bars either side |
+| Fill Screen | stretched to reach both edges |
 
 The default is the honest one: that is the shape the cabinet showed.
+
+One thing worth recording, because it is not in Analogue's documentation and
+cost a round of hardware testing to pin down: `aspect_w`/`aspect_h` in
+`video.json` describe the raster **before** the scaler rotates it, so the shape
+that reaches the panel is `aspect_h:aspect_w`. The arcade entry is therefore
+written `10:9`, not `3:4`.
 
 ## How it is verified
 

@@ -947,13 +947,17 @@ module core_top
     //! scaler_modes entries in video.json from these three bits, so this is a
     //! live choice rather than something baked into the bitstream.
     //!
-    //!   0  Arcade  3:4  -- a 4:3 cabinet monitor stood on its side (default)
-    //!   1  Square  7:8  -- genuinely square pixels, a little wider
-    //!   2  Fill   10:9  -- the panel's own shape, no bars
+    //!   0  Arcade  (default)   1  Fill screen   2  same as 0
     //!
-    //! Default is 0: Time Pilot's monitor was a 4:3 tube rotated, so the honest
-    //! picture is narrower than the panel and sits between black bars. Filling
-    //! the screen means stretching, which is why it is opt-in.
+    //! Measured on hardware: aspect_w:aspect_h in video.json describes the
+    //! raster BEFORE the scaler rotates it, so the shape that reaches the panel
+    //! is aspect_h:aspect_w. That is why the arcade entry is written 10:9 and
+    //! not 3:4 -- see pkg/pocket/.../video.json.
+    //!
+    //! Preset 2 is deliberately the same mode as preset 0. The menu entry
+    //! persists, and a value saved against an earlier three-option menu could
+    //! still select it; pointing it at the arcade mode means a stale setting
+    //! lands somewhere sensible rather than on a mode that no longer exists.
     wire [1:0] aspect_sel = mod_sw0[2:1];
     assign video_preset = (aspect_sel == 2'd1) ? 3'd1
                         : (aspect_sel == 2'd2) ? 3'd2

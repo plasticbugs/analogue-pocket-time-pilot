@@ -12,7 +12,7 @@
       },
       {
         "name": "Screen Shape",
-        "id": 27,
+        "id": 28,
         "type": "list",
         "enabled": true,
         "persist": true,
@@ -21,16 +21,12 @@
         "mask": "0xFFFFFFF9",
         "options": [
           {
-            "name": "Arcade 3:4 (bars)",
+            "name": "Arcade 3:4",
             "value": "0x00000000"
           },
           {
-            "name": "Square pixels 7:8",
+            "name": "Fill Screen",
             "value": "0x00000002"
-          },
-          {
-            "name": "Fill screen",
-            "value": "0x00000004"
           }
         ]
       },
