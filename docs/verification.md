@@ -133,6 +133,21 @@ RAM — and it was tested before the RAM in the read mux. Every RAM read returne
 zero, so the first `RET` popped `0x0000` and the CPU restarted its boot loop
 forever, never reaching the `EI`.
 
+## 4a. Lint — `sim/lint.sh`
+
+One script for both the local checkout and CI, because they were able to drift
+and did: `-Wno-PROCASSINIT` passed locally on Verilator 5.050 and failed CI on
+the older Verilator Ubuntu ships, since naming a warning the binary does not
+know is a hard error rather than a warning — `-Wno-fatal` cannot rescue it. Each
+suppression is now probed against the installed binary before use.
+
+`-Wno-fatal` also means Verilator itself always exits 0, which would leave the
+CI step decorative, so the output is filtered instead: warnings from the
+vendored CPU and sound cores under `modules/` are noise we do not control, and
+anything from our own files fails the run. Verified by injecting a width
+truncation into `timeplt_core.sv` and watching it fail, then pass again on
+restore.
+
 ## 5. Synthesis — `./build-local.sh map` and `./build-local.sh`
 
 `quartus_map` alone takes about a minute and catches syntax and inference
