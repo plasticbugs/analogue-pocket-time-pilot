@@ -1,0 +1,98 @@
+################################################################################
+# Compile the Time Pilot Pocket core and upload the SD-card package.
+# Runs on every push to main, on tags, and on manual dispatch.
+################################################################################
+name: Compile Core
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Verilator
+        run: sudo apt-get update && sudo apt-get install -y verilator
+
+      - name: Lint the RTL
+        run: |
+          verilator --lint-only -Wall \
+            -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL -Wno-VARHIDDEN \
+            -Wno-PROCASSINIT -Wno-PINCONNECTEMPTY -Wno-fatal \
+            --top-module timeplt_core \
+            -Imodules/cpu-tv80 -Imodules/sound-jt49 \
+            rtl/tp_ram.sv rtl/timeplt_video.sv rtl/tv80s_cen.v \
+            rtl/timeplt_main.sv rtl/timeplt_sound.sv rtl/timeplt_core.sv \
+            modules/cpu-tv80/tv80_core.v modules/cpu-tv80/tv80_alu.v \
+            modules/cpu-tv80/tv80_mcode.v modules/cpu-tv80/tv80_reg.v \
+            modules/sound-jt49/jt49*.v
+
+  compile:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Free runner disk space (Quartus image needs ~18GB)
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /opt/hostedtoolcache/CodeQL /usr/local/.ghcup \
+                      /usr/local/share/boost /usr/local/graalvm
+          sudo docker image prune --all --force
+          df -h /
+
+      - name: Compile with Quartus 18.1 (Docker)
+        run: |
+          docker run --rm -v "$PWD":/build -w /build \
+            raetro/quartus:pocket \
+            quartus_sh --flow compile projects/tp_pocket.qpf
+
+      - name: Package for Pocket
+        run: python3 package-pocket.py
+
+      - name: Show resource summary
+        run: cat projects/output_files/tp_pocket.fit.summary || true
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: timepilot-pocket
+          path: release/pocket/
+          if-no-files-found: error
+
+      - name: Publish release (tag pushes only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Releases are normally cut from a hardware-verified CI run rather
+          # than from a fresh compile, so the release usually exists already.
+          # Keep that artifact; only publish here if the tag arrived without one.
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "release ${GITHUB_REF_NAME} already published; skipping"
+            exit 0
+          fi
+          cd release/pocket && zip -qr ../../timepilot-pocket-sdcard.zip . && cd ../..
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "Time Pilot for Analogue Pocket ${GITHUB_REF_NAME}" \
+            --notes "Unzip onto the Pocket SD card root, overwriting previous files. The ROM image goes in Assets/timeplt/common/." \
+            timepilot-pocket-sdcard.zip
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports
+          path: |
+            projects/output_files/*.rpt
+            projects/output_files/*.summary
+          if-no-files-found: ignore

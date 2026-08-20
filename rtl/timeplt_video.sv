@@ -210,7 +210,12 @@ module timeplt_video (
     wire [2:0] k_idx    = act_attr[6] ? ~k_scr : k_scr; // tile's own flipx
     wire [7:0] k_byte   = k_idx[2] ? act_br : act_bl;
     wire [1:0] k_nib    = k_idx[1:0];
-    wire [1:0] tile_px  = {k_byte[3 - k_nib], k_byte[7 - k_nib]};
+    // Explicit 3-bit index: with a bare literal Quartus sizes `3 - k_nib` to two
+    // bits and warns it cannot reach the whole byte. The values are the same
+    // either way, but the warning is worth not having in the log.
+    wire [2:0] k_hi     = 3'd3 - {1'b0, k_nib};
+    wire [2:0] k_lo     = 3'd7 - {1'b0, k_nib};
+    wire [1:0] tile_px  = {k_byte[k_hi], k_byte[k_lo]};
     wire [6:0] char_pen = {act_attr[4:0], tile_px};
     wire       tile_cat = act_attr[4];
 
@@ -296,7 +301,9 @@ module timeplt_video (
     wire [3:0] s_dcol = s_attr[6] ? s_col : ~s_col;        // flipx when bit 6 = 0
     wire [8:0] s_dx   = {1'b0, s_sx} + {5'b0, s_dcol};
     wire [8:0] s_dxf  = flip ? (9'd255 - s_dx) : s_dx;
-    wire [1:0] s_pix  = {s_byte[3 - s_k], s_byte[7 - s_k]};
+    wire [2:0] s_hi   = 3'd3 - {1'b0, s_k};
+    wire [2:0] s_lo   = 3'd7 - {1'b0, s_k};
+    wire [1:0] s_pix  = {s_byte[s_hi], s_byte[s_lo]};
 
     wire spr_start = ce_pix && (hcnt == HLEAD[8:0] + HDISP[8:0] - 9'd1);
     wire last_sprite = (offs == 6'h10);

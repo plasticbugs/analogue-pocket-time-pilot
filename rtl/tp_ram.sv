@@ -18,7 +18,9 @@ module tp_spram_dp #(parameter AW = 8, parameter DW = 8) (
     output logic [DW-1:0] q
 );
     logic [DW-1:0] mem [0:(1<<AW)-1] /* verilator public_flat_rd */;
-    initial for (int i = 0; i < (1<<AW); i++) mem[i] = '0;
+    // Assignment pattern rather than a for loop: Quartus caps constant loops
+    // at 5000 iterations, and the program ROM alone is 32768 words.
+    initial mem = '{default: '0};
     always_ff @(posedge clk) begin
         if (we) mem[wa] <= d;
         q <= mem[ra];
@@ -38,7 +40,9 @@ module tp_dpram #(parameter AW = 10, parameter DW = 8) (
     output logic [DW-1:0] b_q
 );
     logic [DW-1:0] mem [0:(1<<AW)-1] /* verilator public_flat_rd */;
-    initial for (int i = 0; i < (1<<AW); i++) mem[i] = '0;
+    // Assignment pattern rather than a for loop: Quartus caps constant loops
+    // at 5000 iterations, and the program ROM alone is 32768 words.
+    initial mem = '{default: '0};
     always_ff @(posedge clk) begin
         if (a_we) mem[a_addr] <= a_d;
         a_q <= mem[a_addr];

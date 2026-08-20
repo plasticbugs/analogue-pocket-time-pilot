@@ -90,3 +90,6 @@ _tmp
 # --- Python ---
 __pycache__/
 *.pyc
+
+# --- MAME-derived analysis outputs (states, snapshots, recordings) ---
+/artifacts*/

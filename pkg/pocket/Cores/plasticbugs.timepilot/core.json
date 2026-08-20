@@ -1,0 +1,36 @@
+{
+  "core": {
+    "magic": "APF_VER_1",
+    "metadata": {
+      "platform_ids": [
+        "timepilot"
+      ],
+      "shortname": "timepilot",
+      "description": "Time Pilot (Konami, 1982) arcade core",
+      "author": "plasticbugs",
+      "url": "https://github.com/plasticbugs/analogue-pocket-time-pilot",
+      "version": "0.1.0",
+      "date_release": "2026-08-19"
+    },
+    "framework": {
+      "target_product": "Analogue Pocket",
+      "version_required": "1.1",
+      "sleep_supported": false,
+      "dock": {
+        "supported": true,
+        "analog_output": false
+      },
+      "hardware": {
+        "link_port": false,
+        "cartridge_adapter": -1
+      }
+    },
+    "cores": [
+      {
+        "name": "default",
+        "id": 0,
+        "filename": "bitstream.rbf_r"
+      }
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+# ==============================================================================
+# Time Pilot core RTL
+# ==============================================================================
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "timeplt_core.sv"]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "timeplt_main.sv"]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "timeplt_video.sv"]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "timeplt_sound.sv"]
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "tp_ram.sv"]
+set_global_assignment -name VERILOG_FILE       [file join $::quartus(qip_path) "tv80s_cen.v"]
+
+# tv80 Z80 (MIT, https://github.com/hutch31/tv80) -- the same source the
+# Verilator benches use, so what is verified is what is synthesised.
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "../modules/cpu-tv80/tv80_core.v"]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "../modules/cpu-tv80/tv80_alu.v"]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "../modules/cpu-tv80/tv80_mcode.v"]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "../modules/cpu-tv80/tv80_reg.v"]
+
+# jt49 AY-3-8910 (GPLv3, https://github.com/jotego/jt49)
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "../modules/sound-jt49/jt49.v"]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "../modules/sound-jt49/jt49_div.v"]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "../modules/sound-jt49/jt49_noise.v"]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "../modules/sound-jt49/jt49_eg.v"]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "../modules/sound-jt49/jt49_exp.v"]
+set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) "../modules/sound-jt49/jt49_cen.v"]

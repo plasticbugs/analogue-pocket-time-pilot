@@ -88,7 +88,6 @@ module timeplt_main (
 
     // -------------------------------------------------------------- decode
     wire mem    = ~cpu_mreq_n && cpu_rfsh_n;
-    wire mem_rd = mem && ~cpu_rd_n;
     wire mem_wr = mem && ~cpu_wr_n;
 
     wire sel_rom  = (cpu_a[15] == 1'b0) && (cpu_a[14:13] != 2'b11);   // 0000-5FFF

@@ -1,0 +1,161 @@
+{
+  "interact": {
+    "magic": "APF_VER_1",
+    "variables": [
+      {
+        "name": "Reset Core",
+        "id": 0,
+        "type": "action",
+        "enabled": true,
+        "address": "0xF0000000",
+        "value": 1
+      },
+      {
+        "name": "Lives",
+        "id": 20,
+        "type": "list",
+        "enabled": true,
+        "persist": true,
+        "address": "0xF1000000",
+        "defaultval": 0,
+        "mask": "0xFFFFFCFF",
+        "options": [
+          {
+            "name": "3",
+            "value": "0x00000000"
+          },
+          {
+            "name": "4",
+            "value": "0x00000100"
+          },
+          {
+            "name": "5",
+            "value": "0x00000200"
+          },
+          {
+            "name": "255 (cheat)",
+            "value": "0x00000300"
+          }
+        ]
+      },
+      {
+        "name": "Bonus Life",
+        "id": 21,
+        "type": "list",
+        "enabled": true,
+        "persist": true,
+        "address": "0xF1000000",
+        "defaultval": 0,
+        "mask": "0xFFFFF7FF",
+        "options": [
+          {
+            "name": "10000 then 50000",
+            "value": "0x00000000"
+          },
+          {
+            "name": "20000 then 60000",
+            "value": "0x00000800"
+          }
+        ]
+      },
+      {
+        "name": "Difficulty",
+        "id": 22,
+        "type": "list",
+        "enabled": true,
+        "persist": true,
+        "address": "0xF1000000",
+        "defaultval": 0,
+        "mask": "0xFFFF8FFF",
+        "options": [
+          {
+            "name": "4 (factory)",
+            "value": "0x00000000"
+          },
+          {
+            "name": "1 (easiest)",
+            "value": "0x00003000"
+          },
+          {
+            "name": "2",
+            "value": "0x00002000"
+          },
+          {
+            "name": "3",
+            "value": "0x00001000"
+          },
+          {
+            "name": "5",
+            "value": "0x00007000"
+          },
+          {
+            "name": "6",
+            "value": "0x00006000"
+          },
+          {
+            "name": "7",
+            "value": "0x00005000"
+          },
+          {
+            "name": "8 (hardest)",
+            "value": "0x00004000"
+          }
+        ]
+      },
+      {
+        "name": "Demo Sounds",
+        "id": 23,
+        "type": "list",
+        "enabled": true,
+        "persist": true,
+        "address": "0xF1000000",
+        "defaultval": 0,
+        "mask": "0xFFFF7FFF",
+        "options": [
+          {
+            "name": "On",
+            "value": "0x00000000"
+          },
+          {
+            "name": "Off",
+            "value": "0x00008000"
+          }
+        ]
+      },
+      {
+        "name": "Cocktail Cabinet",
+        "id": 24,
+        "type": "check",
+        "enabled": true,
+        "persist": true,
+        "address": "0xF1000000",
+        "defaultval": 0,
+        "mask": "0xFFFFFBFF",
+        "value": "0x00000400"
+      },
+      {
+        "name": "Free Play",
+        "id": 25,
+        "type": "check",
+        "enabled": true,
+        "persist": true,
+        "address": "0xF1000000",
+        "defaultval": 0,
+        "mask": "0xFFFFFF00",
+        "value": "0x000000FF"
+      },
+      {
+        "name": "Diagnostic Overlay",
+        "id": 26,
+        "type": "check",
+        "enabled": true,
+        "persist": false,
+        "address": "0xF2000000",
+        "defaultval": 0,
+        "mask": "0xFFFFFFFE",
+        "value": "0x00000001"
+      }
+    ],
+    "messages": []
+  }
+}

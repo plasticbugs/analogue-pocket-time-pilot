@@ -864,8 +864,9 @@ module core_top
                            m_coin2,
                            m_coin1 };
 
+    //! One button on the cabinet; B and A both fire so either thumb works.
     wire [7:0] tp_in1 = ~{ 3'b000,
-                           m_btn1,
+                           (m_btn2 | m_btn3),
                            m_down, m_up, m_right, m_left };
 
     wire [7:0] tp_in2 = 8'hff;   // cocktail player 2, unused on a handheld
@@ -936,7 +937,8 @@ module core_top
     //!   3 ROM download completed
     //!   4 heartbeat: toggles once a second, proves the machine is running
     //! ------------------------------------------------------------------
-    wire ovl_on = dip_sw1[7];
+    //! Its own Interact register, not a DIP bit -- dip_sw1 is the real SW2.
+    wire ovl_on = mod_sw0[0];
 
     reg [25:0] hb_cnt;
     reg        heartbeat;
