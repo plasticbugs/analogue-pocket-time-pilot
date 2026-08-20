@@ -15,7 +15,7 @@ every access is single cycle and deterministic.
 1. Copy `Cores/`, `Platforms/` and `Assets/` from the release zip onto the root
    of the Pocket's SD card.
 2. Build the ROM image from your own romset and copy it to
-   `Assets/timeplt/common/timeplt.rom`:
+   `Assets/timepilot/common/timeplt.rom`:
 
    ```sh
    python3 mra_build.py timeplt.mra timeplt.zip

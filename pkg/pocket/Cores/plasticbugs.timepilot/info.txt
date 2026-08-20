@@ -9,7 +9,7 @@ ROMs are not included. The core reads
 one file, built from your own MAME
 timeplt romset:
 
-Assets/timeplt/common/timeplt.rom
+Assets/timepilot/common/timeplt.rom
 
 A core is FPGA gateware and cannot
 build that itself. The download has a

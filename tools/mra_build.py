@@ -96,7 +96,10 @@ def main():
     mra, romset = args[0], args[1]
     out = args[2] if len(args) > 2 else None
     if out is None:
-        name = ET.parse(mra).getroot().findtext('name') or 'output'
+        root = ET.parse(mra).getroot()
+        # setname is the MAME romset name, which is also what data.json asks
+        # the Pocket to look for -- so the default output needs no renaming.
+        name = root.findtext('setname') or root.findtext('name') or 'output'
         out = name.lower().replace(' ', '_') + '.rom'
 
     if verbose:
@@ -105,7 +108,7 @@ def main():
     with open(out, 'wb') as f:
         f.write(image)
     print(f'wrote {out} ({len(image)} bytes, md5 {md5}) - verified')
-    print('copy it to  Assets/timeplt/common/  on your Pocket SD card')
+    print('copy it to  Assets/timepilot/common/  on your Pocket SD card')
 
 
 if __name__ == '__main__':
