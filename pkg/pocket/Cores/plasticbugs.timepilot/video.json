@@ -9,10 +9,28 @@
                 "aspect_h": 4,
                 "rotation": 90,
                 "mirror": 0
+            },
+            {
+                "width": 256,
+                "height": 224,
+                "aspect_w": 7,
+                "aspect_h": 8,
+                "rotation": 90,
+                "mirror": 0
+            },
+            {
+                "width": 256,
+                "height": 224,
+                "aspect_w": 10,
+                "aspect_h": 9,
+                "rotation": 90,
+                "mirror": 0
             }
         ],
         "display_modes": [
-            { "id": "0x10" }
+            {
+                "id": "0x10"
+            }
         ]
     }
 }

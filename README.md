@@ -39,7 +39,7 @@ every access is single cycle and deterministic.
 | Start | Start |
 
 DIP switches — lives, bonus life, difficulty, demo sounds, free play — are in
-the Pocket's Interact menu, along with a diagnostic overlay.
+the Pocket's Interact menu, along with the screen shape below.
 
 ## The screen
 
@@ -48,6 +48,19 @@ arcade raster and the Pocket's scaler turns it 90 degrees clockwise, declared
 in `video.json`. That costs no logic and, more usefully, keeps the gateware
 rendering in the same coordinates the hardware used — which is what makes it
 possible to diff frames against MAME pixel for pixel.
+
+A vertical game cannot fill a screen that is wider than it is tall without
+being stretched, so **Screen Shape** in the Interact menu offers three
+presentations. The scaler reads the choice from `video_rgb[15:13]` every frame,
+so it switches live — no rebuild, no reboot.
+
+| | shape | on a 1600x1440 panel |
+|---|---|---|
+| **Arcade 3:4** (default) | a 4:3 cabinet monitor stood on its side | 1080x1440, black bars either side |
+| Square pixels 7:8 | 224x256 with genuinely square pixels | 1260x1440, narrower bars |
+| Fill screen | the panel's own shape | 1600x1440, stretched |
+
+The default is the honest one: that is the shape the cabinet showed.
 
 ## How it is verified
 

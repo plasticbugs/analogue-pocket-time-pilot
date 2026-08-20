@@ -163,9 +163,11 @@ Everything above is simulation against MAME. These cannot be settled without a
 Pocket:
 
 * **Screen orientation and aspect.** `video.json` declares rotation 90
-  (clockwise) with a 3:4 aspect. The rotation direction is known to be right —
-  the same rotation makes the renders match MAME's snapshots pixel for pixel —
-  but how the scaler fits a 3:4 image to the panel is worth looking at.
+  (clockwise) and three `scaler_modes`; the rotation direction is known to be
+  right, because the same rotation makes the renders match MAME's snapshots
+  pixel for pixel. How the scaler fits each aspect to the panel is not
+  simulable, so all three are selectable from the Interact menu at runtime —
+  picking the wrong default costs a menu tap rather than a rebuild.
 * **Icon and banner colour order.** Analogue documents the 16-bit assets as
   BGRA5551 but the field order only shows up on hardware, so
   `tools/make_images.py` draws both in greys and white: with r == g == b the two
@@ -179,3 +181,5 @@ Pocket:
 * **The watchdog.** It resets the CPU after 1.37 s without a kick. The flag has
   stayed clear across every simulation run including 25 seconds of play, but
   only hardware will show whether anything in a real session ever gets close.
+  There is no longer an on-screen overlay to read it from — that was removed on
+  request and is one revert away in git if a hardware fault ever needs it.

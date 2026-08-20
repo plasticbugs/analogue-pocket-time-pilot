@@ -883,6 +883,9 @@ module core_top
     wire       tp_hs, tp_vs, tp_hb, tp_vb, tp_de, tp_ce_pix;
     wire signed [15:0] tp_audio;
     wire       tp_audio_ce;
+    // Kept wired out of the core for the Verilator benches, which fail on
+    // dbg_spr_overrun; nothing on hardware reads them now that the on-screen
+    // overlay is gone (it is one revert away in git if a fault ever needs it).
     wire       dbg_spr_overrun, dbg_watchdog;
 
     timeplt_core tp (
@@ -925,62 +928,13 @@ module core_top
     );
 
     //! ------------------------------------------------------------------
-    //! Diagnostic overlay, behind an Interact switch.
-    //!
-    //! Four coloured squares on the bottom scanlines, each a status bit. It
-    //! costs almost nothing in logic and it is the only way to see inside a
-    //! fault that only appears on real hardware -- so it goes in before it is
-    //! needed, not after.
-    //!
-    //!   1 sprite engine overran its line budget (sticky)
-    //!   2 watchdog fired (sticky)
-    //!   3 ROM download completed
-    //!   4 heartbeat: toggles once a second, proves the machine is running
-    //! ------------------------------------------------------------------
-    //! Its own Interact register, not a DIP bit -- dip_sw1 is the real SW2.
-    wire ovl_on = mod_sw0[0];
-
-    reg [25:0] hb_cnt;
-    reg        heartbeat;
-    always @(posedge clk_sys) begin
-        hb_cnt <= hb_cnt + 1'd1;
-        if (hb_cnt == 26'd49_152_000) begin
-            hb_cnt    <= 26'd0;
-            heartbeat <= ~heartbeat;
-        end
-    end
-
-    reg [8:0] ovl_x;
-    reg [8:0] ovl_y;
-    reg       de_q;
-    always @(posedge clk_sys) if (tp_ce_pix) begin
-        de_q <= tp_de;
-        if (tp_de) ovl_x <= ovl_x + 1'd1;
-        else begin
-            ovl_x <= 9'd0;
-            if (de_q) ovl_y <= ovl_y + 1'd1;
-        end
-        if (tp_vs) ovl_y <= 9'd0;
-    end
-
-    wire       in_ovl  = ovl_on && (ovl_y >= 9'd212) && (ovl_y < 9'd220) && (ovl_x < 9'd40);
-    wire [2:0] ovl_sel = ovl_x[5:3];
-    wire       ovl_bit = (ovl_sel == 3'd0) ? dbg_spr_overrun
-                       : (ovl_sel == 3'd1) ? dbg_watchdog
-                       : (ovl_sel == 3'd2) ? dataslot_allcomplete
-                       :                     heartbeat;
-    wire [7:0] ovl_r = in_ovl ? (ovl_bit ? 8'hFF : 8'h20) : tp_r;
-    wire [7:0] ovl_g = in_ovl ? (ovl_bit ? 8'hFF : 8'h20) : tp_g;
-    wire [7:0] ovl_b = in_ovl ? (ovl_bit ? 8'h00 : 8'h20) : tp_b;
-
-    //! ------------------------------------------------------------------
     //! Video: the core already emits one pixel per clk_vid tick, so this is
     //! just a retiming register onto the video clock (same PLL, STA-timed).
     //! ------------------------------------------------------------------
     reg [7:0] vr_q, vg_q, vb_q;
     reg       vhs_q, vvs_q, vde_q;
     always @(posedge clk_vid) begin
-        vr_q  <= ovl_r; vg_q <= ovl_g; vb_q <= ovl_b;
+        vr_q  <= tp_r;  vg_q <= tp_g;  vb_q <= tp_b;
         vhs_q <= tp_hs; vvs_q <= tp_vs; vde_q <= tp_de;
     end
     assign core_r  = vr_q;
@@ -989,7 +943,21 @@ module core_top
     assign core_hs = vhs_q;
     assign core_vs = vvs_q;
     assign core_de = vde_q;
-    assign video_preset = 3'd0;
+    //! Screen shape, from the Interact menu. The scaler picks one of the
+    //! scaler_modes entries in video.json from these three bits, so this is a
+    //! live choice rather than something baked into the bitstream.
+    //!
+    //!   0  Arcade  3:4  -- a 4:3 cabinet monitor stood on its side (default)
+    //!   1  Square  7:8  -- genuinely square pixels, a little wider
+    //!   2  Fill   10:9  -- the panel's own shape, no bars
+    //!
+    //! Default is 0: Time Pilot's monitor was a 4:3 tube rotated, so the honest
+    //! picture is narrower than the panel and sits between black bars. Filling
+    //! the screen means stretching, which is why it is opt-in.
+    wire [1:0] aspect_sel = mod_sw0[2:1];
+    assign video_preset = (aspect_sel == 2'd1) ? 3'd1
+                        : (aspect_sel == 2'd2) ? 3'd2
+                        :                        3'd0;
 
     //! ------------------------------------------------------------------
     //! Audio clock domain crossing.

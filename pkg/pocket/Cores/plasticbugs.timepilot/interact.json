@@ -11,6 +11,30 @@
         "value": 1
       },
       {
+        "name": "Screen Shape",
+        "id": 27,
+        "type": "list",
+        "enabled": true,
+        "persist": true,
+        "address": "0xF2000000",
+        "defaultval": 0,
+        "mask": "0xFFFFFFF9",
+        "options": [
+          {
+            "name": "Arcade 3:4 (bars)",
+            "value": "0x00000000"
+          },
+          {
+            "name": "Square pixels 7:8",
+            "value": "0x00000002"
+          },
+          {
+            "name": "Fill screen",
+            "value": "0x00000004"
+          }
+        ]
+      },
+      {
         "name": "Lives",
         "id": 20,
         "type": "list",
@@ -143,17 +167,6 @@
         "defaultval": 0,
         "mask": "0xFFFFFF00",
         "value": "0x000000FF"
-      },
-      {
-        "name": "Diagnostic Overlay",
-        "id": 26,
-        "type": "check",
-        "enabled": true,
-        "persist": false,
-        "address": "0xF2000000",
-        "defaultval": 0,
-        "mask": "0xFFFFFFFE",
-        "value": "0x00000001"
       }
     ],
     "messages": []
