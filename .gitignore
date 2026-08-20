@@ -1,0 +1,92 @@
+# --- Time Pilot project: never commit ROMs, romsets or derived ROM images ---
+/timeplt/
+/timeplt.zip
+*.rom
+/build/
+/artifacts/
+/ref/
+
+# The bootstrap methodology guide is reference-only, not part of the core
+/METHODOLOGY.md
+
+# --- macOS ---
+.DS_Store
+**/.DS_Store
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+.fseventsd
+.DocumentRevisions-V100
+.TemporaryItems
+Icon?
+
+# --- Quartus directories and files ---
+db
+greybox_tmp
+hps_isw_handoff
+incremental_db
+output_files
+PLLJ_PLLSPE_INFO.txt
+simulation
+vip
+.qsys_edit
+*_netlist
+*_sim
+*.bak
+*.bsf
+*.cdf
+*.cmp
+*.csv
+*.done
+*.f
+*.pin
+*.pof
+*.ptf.*
+*.qar
+*.qarlog
+*.qdf
+*.qws
+*.rbf
+*.rbf_r
+*.rpt
+*.sip
+*.sld
+*.smsg
+*.sof
+*.sopc_builder
+*.sopcinfo
+*.spd
+*.summary
+build_id.mif
+build_id.v
+c5_pin_model_dump.txt
+cr_ie_info.json
+
+# --- Packaging / release staging ---
+/pkg/**/*.rom
+/pkg/**/*.zip
+/staging/*
+/release/*
+!gateware.json
+!/pkg/*
+!info.txt
+
+# --- Verilator / simulation output ---
+obj_dir/
+*.vcd
+*.fst
+a.out
+.build
+_tmp
+
+# --- Editors ---
+.vscode
+.idea
+*.suo
+*.sw?
+
+# --- Python ---
+__pycache__/
+*.pyc
