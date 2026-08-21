@@ -50,6 +50,7 @@ static std::vector<unsigned char> load_rom(const char *path) {
 // Measured, not assumed: RTL vblank 302 reproduces MAME frame 300 byte for byte
 // (see docs/verification.md). The skew is applied to both the stop point and
 // the input schedule so "frame N" means the same game state on both sides.
+static int reset_paused = -1;
 static const int FRAME_SKEW = 2;
 static bool two_player = false;   // -2p: coin twice, then 2 player start
 
@@ -98,6 +99,12 @@ int main(int argc, char **argv) {
         if (!strcmp(argv[i], "-ram") && i + 1 < argc) ram_path = argv[++i];
         else if (!strcmp(argv[i], "-2p")) two_player = true;
         else if (!strcmp(argv[i], "-quiet")) quiet = true;
+        // -resetpaused N: at frame N, assert pause (as the Analogue OS does
+        // while its menu is open), pulse reset for the same 107.7 us the
+        // Interact reset holds, then release pause. tp84 failed exactly here
+        // because mc6809i has no system clock; tv80 resets asynchronously, so
+        // this should reboot. Verified rather than assumed.
+        else if (!strcmp(argv[i], "-resetpaused") && i + 1 < argc) reset_paused = atoi(argv[++i]);
     }
 
     dut = new Vtimeplt_main;
@@ -123,11 +130,26 @@ int main(int argc, char **argv) {
     // ---- run to the target frame
     int vbl = 0;
     set_inputs(-FRAME_SKEW);
+    bool did_rp = false;
     while (vbl < target + FRAME_SKEW) {
         tick();
         if (dut->vblank_rise_o) {
             vbl++;
             set_inputs(vbl - FRAME_SKEW);
+            if (reset_paused >= 0 && !did_rp && (vbl - FRAME_SKEW) == reset_paused) {
+                did_rp = true;
+                printf("[rp] pc before = %04x\n", dut->dbg_pc);
+                dut->pause = 1;
+                for (int i = 0; i < 20000; i++) tick();     // menu open a while
+                dut->reset = 1;
+                for (int i = 0; i < 5294; i++) tick();      // 107.7 us at 49.152 MHz
+                dut->reset = 0;
+                for (int i = 0; i < 20000; i++) tick();     // still in the menu
+                printf("[rp] pc while paused after reset = %04x\n", dut->dbg_pc);
+                dut->pause = 0;
+                for (int i = 0; i < 2000; i++) tick();
+                printf("[rp] pc just after unpause      = %04x\n", dut->dbg_pc);
+            }
         }
     }
 

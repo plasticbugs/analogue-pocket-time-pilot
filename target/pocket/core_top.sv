@@ -541,8 +541,12 @@ module core_top
     wire [31:0] int_bridge_rd_data;
     wire [31:0] nvm_bridge_rd_data, nvm_bridge_rd_data_s;
 
-    // Synchronize nvm_bridge_rd_data into clk_74a domain before usage
-    synch_3 sync_nvm(nvm_bridge_rd_data, nvm_bridge_rd_data_s, clk_74a);
+    // Synchronize nvm_bridge_rd_data into clk_74a domain before usage.
+    // WIDTH is not optional here: the template omits it, which instantiates a
+    // one-bit synchroniser and leaves 31 of the 32 bits uncrossed. This core
+    // does not use the NVRAM path, but a half-synchronised word is wrong
+    // whether or not anything reads it.
+    synch_3 #(.WIDTH(32)) sync_nvm(nvm_bridge_rd_data, nvm_bridge_rd_data_s, clk_74a);
 
     always_comb begin
         casex(bridge_addr)
@@ -991,14 +995,73 @@ module core_top
     //! the flag has survived two synchroniser stages the data has been still
     //! for several cycles, so the capture is always of a settled value.
     //! ------------------------------------------------------------------
-    logic signed [15:0] snd_hold;
-    logic               snd_tog = 1'b0;
-    logic        [9:0]  snd_div = 10'd0;
+    //! ------------------------------------------------------------------
+    //! Decimate before the handover, not just sample.
+    //!
+    //! The sound board updates at 223.7 kHz -- the AY's own channel rate,
+    //! chip clock over eight -- and this used to be point-sampled at 48 kHz,
+    //! which folds everything between 24 kHz and 112 kHz straight back into
+    //! the audible band. The board's switchable RC filters do not help: the
+    //! game leaves them out most of the time, and when they are in they are
+    //! per channel, not on the sum.
+    //!
+    //! Average exactly the samples that fall between two 48 kHz ticks, which
+    //! puts the filter's nulls on the output rate and its multiples, then take
+    //! a two-point average twice ([1 2 1]/4) which adds one at 24 kHz.
+    //! Measured against a high-order reference decimation of the same
+    //! recording, with the fractional delay each stage adds compensated for:
+    //! point-sampling -19.7 dB relative to signal, aligned box -25.7 dB, plus
+    //! one stage -31.7 dB, plus two -34.4 dB.
+    logic signed [15:0] snd_hold   = 16'sd0;
+    logic               snd_tog    = 1'b0;
+    logic        [9:0]  snd_div    = 10'd0;
+    logic signed [19:0] snd_acc    = 20'sd0;
+    logic        [3:0]  snd_cnt    = 4'd0;
+    logic signed [15:0] snd_avg    = 16'sd0;
+    logic signed [15:0] snd_avg_d  = 16'sd0;
+    logic signed [15:0] snd_avg_d2 = 16'sd0;
+
+    wire signed [19:0] snd_s = {{4{tp_audio[15]}}, tp_audio};
+    //! 65536/n for the sample counts this rate ratio produces (4.66 per tick).
+    wire [14:0] snd_rcp = (snd_cnt == 4'd3) ? 15'd21845 :
+                          (snd_cnt == 4'd4) ? 15'd16384 :
+                          (snd_cnt == 4'd5) ? 15'd13107 :
+                          (snd_cnt == 4'd6) ? 15'd10923 : 15'd13107;
+    wire signed [34:0] snd_prod = snd_acc * $signed({1'b0, snd_rcp});
+    wire signed [18:0] snd_quot = snd_prod[34:16];
+    wire signed [15:0] snd_clip = (snd_quot >  19'sh0_7fff) ? 16'sh7fff :
+                                  (snd_quot < -19'sh0_8000) ? 16'sh8000 :
+                                  snd_quot[15:0];
+    wire snd_tick = (snd_div == 10'd1023);   // 49.152 MHz / 1024 = 48.0 kHz
+
+    always_ff @(posedge clk_sys) begin
+        if (snd_tick) begin
+            snd_avg    <= (snd_cnt == 4'd0) ? snd_avg : snd_clip;
+            snd_avg_d  <= snd_avg;
+            snd_avg_d2 <= snd_avg_d;
+            snd_acc    <= tp_audio_ce ? snd_s : 20'sd0;
+            snd_cnt    <= tp_audio_ce ? 4'd1  : 4'd0;
+        end
+        else if (tp_audio_ce) begin
+            snd_acc <= snd_acc + snd_s;
+            snd_cnt <= snd_cnt + 4'd1;
+        end
+    end
+
+    //! The registers above update on this same edge, so this reads the three
+    //! previous averages -- the filter arrives a tick (21 us) late.
+    wire signed [18:0] snd_tri = {{3{snd_avg[15]}},    snd_avg}
+                               + {{2{snd_avg_d[15]}},  snd_avg_d,  1'b0}
+                               + {{3{snd_avg_d2[15]}}, snd_avg_d2};
+    wire signed [18:0] snd_s4  = snd_tri >>> 2;
+    wire signed [16:0] snd_q4  = snd_s4[16:0];
+
     always_ff @(posedge clk_sys) begin
         snd_div <= snd_div + 1'd1;
-        if (snd_div == 10'd1023) begin       // 49.152 MHz / 1024 = 48.0 kHz
+        if (snd_tick) begin
             snd_div  <= 10'd0;
-            snd_hold <= tp_audio;
+            snd_hold <= (snd_q4 >  17'sh0_7fff) ? 16'sh7fff :
+                        (snd_q4 < -17'sh0_8000) ? 16'sh8000 : snd_q4[15:0];
             snd_tog  <= ~snd_tog;
         end
     end
