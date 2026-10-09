@@ -77,11 +77,15 @@ verilator --lint-only $FLAGS -Wno-PINMISSING --top-module core_top \
     modules/sound-jt49/jt49.v modules/sound-jt49/jt49_div.v \
     modules/sound-jt49/jt49_noise.v modules/sound-jt49/jt49_eg.v \
     modules/sound-jt49/jt49_exp.v modules/sound-jt49/jt49_cen.v \
-    target/pocket/core_top.sv \
+    target/pocket/core_top.sv target/pocket/pocket_analogizer.sv \
+    target/pocket/analogizer/*.v target/pocket/analogizer/*.sv sim/ps2_keyboard_stub.v \
     > "$out2" 2>&1
 set -e
 
+# RndMnkIII's Analogizer module is vendored verbatim in target/pocket/analogizer/,
+# so its findings are his, like modules/'s; the wrapper's are ours.
 top=$(grep -E '^%(Warning|Error)' "$out2" | grep -E ': *target/pocket/' \
+      | grep -v -E ': *target/pocket/analogizer/' \
       | grep -v 'Cannot find file containing module' || true)
 if [ -n "$top" ]; then
     echo
@@ -90,5 +94,25 @@ if [ -n "$top" ]; then
     exit 1
 fi
 
+# Third pass: the Analogizer wrapper on its own, with the adapter's vendored
+# module behind it and a stand-in for its one VHDL file.  hq2x.sv (MiSTer's)
+# assigns its output wire in an always block, which Quartus takes and
+# Verilator calls an error: PROCASSWIRE is waived for this pass.
+out3=$tmp/lint_ana.out
+set +e
+verilator --lint-only $FLAGS -Wno-PROCASSWIRE --top-module pocket_analogizer \
+    target/pocket/pocket_analogizer.sv platform/pocket/helpers/synch_3.sv \
+    target/pocket/analogizer/*.v target/pocket/analogizer/*.sv sim/ps2_keyboard_stub.v \
+    > "$out3" 2>&1
+set -e
+ana=$(grep -E '^%(Warning|Error)' "$out3" | grep -v 'Exiting due to' \
+      | grep -v -E '^%Warning[^ ]*: *(target/pocket/analogizer/|platform/pocket/|sim/ps2_keyboard_stub)' || true)
+if [ -n "$ana" ]; then
+    echo
+    echo "lint FAILED -- the Analogizer wrapper:"
+    echo "$ana"
+    exit 1
+fi
+
 echo
-echo "lint clean (warnings from vendored modules/ and platform/ ignored)"
+echo "lint clean (warnings from vendored modules/, platform/ and target/pocket/analogizer/ ignored)"

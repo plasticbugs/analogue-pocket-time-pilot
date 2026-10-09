@@ -80,6 +80,26 @@ cost a round of hardware testing to pin down: `aspect_w`/`aspect_h` in
 that reaches the panel is `aspect_h:aspect_w`. The arcade entry is therefore
 written `10:9`, not `3:4`.
 
+## Analogizer
+
+The core supports RndMnkIII's [Analogizer](https://github.com/RndMnkIII/Analogizer)
+adapter: the board's own picture out of the VGA port (RGBS, RGsB, YPbPr, Y/C,
+or scandoubled for a VGA monitor) and SNAC controllers in. It is set up in the
+core's own menu (Analogizer, Analogizer Video, SNAC Adapter, SNAC Assignment,
+and H and V Position to centre the picture on the CRT); with "Analogizer" off,
+the default, the core is unchanged. The CRT gets the vertical monitor's own
+raster, unrotated, so stand the set on its side (turned clockwise). Because the
+core declares a cartridge adapter, the Pocket powers the slot: take any game
+cartridge out first. [docs/analogizer.md](docs/analogizer.md) has the modes,
+the controllers and what has been checked; it has not been tried on hardware
+yet.
+
+First time with an adapter, in this order: "Analogizer: Off" plays exactly as
+before; then On, RGBS, the picture on the CRT (16.0 kHz, 60.6 Hz); then each
+other mode; then a SNAC pad; then that the menu keeps its settings across a
+reload and the position sliders move the picture (try a negative value: no
+installed core uses a signed slider yet).
+
 ## How it is verified
 
 Three gates, all against MAME, described in [docs/verification.md](docs/verification.md):
@@ -133,6 +153,17 @@ push.
   **Jacob Boline** — USB HID and PS/2 keyboard translation; **Till Harbaum** —
   the original scanline generator; **Analogue** — the openFPGA APF reference
   `core_top`.
+* **RndMnkIII** -- the [Analogizer](https://github.com/RndMnkIII/Analogizer)
+  adapter and its `openFPGA_Pocket_Analogizer` module
+  (`target/pocket/analogizer/`, taken verbatim from his MiraxPocket core),
+  with the parts it gathers from others: the Y/C encoder by **Mike Simone**
+  (MiSTerFPGA_YC_Encoder), the scandoubler and HQ2x by **Sorgelig** and
+  **Ludvig Strigeus** (MiSTer), the PlayStation controller interface after
+  **pgate1**'s psPAD, and the SNAC game-controller readers he credits to
+  **@MikeSimonson**, the **MiST** project, **@RandyS**, **jotego**,
+  **Scott Larson** (the PS/2 receiver) and **@tomasz**. The wrapper
+  (`target/pocket/pocket_analogizer.sv`) and its bench come from
+  [pocket-core-template](https://github.com/plasticbugs/pocket-core-template).
 * MAME's `timeplt` driver by Nicola Salmoria, used as the oracle throughout.
 
 This core is GPLv3, following jt49.

@@ -101,3 +101,7 @@ _tmp
 # --- Python ---
 __pycache__/
 *.pyc
+
+# the Analogizer bench
+sim/obj_analogizer/
+sim/obj_analogizer.log
