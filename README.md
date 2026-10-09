@@ -86,7 +86,8 @@ The core supports RndMnkIII's [Analogizer](https://github.com/RndMnkIII/Analogiz
 adapter: the board's own picture out of the VGA port (RGBS, RGsB, YPbPr, Y/C,
 or scandoubled for a VGA monitor) and SNAC controllers in. It is set up in the
 core's own menu (Analogizer, Analogizer Video, SNAC Adapter, SNAC Assignment,
-and H and V Position to centre the picture on the CRT); with "Analogizer" off,
+H and V Position to centre the picture on the CRT, and H Size for its
+width -- with the set on its side, the game's height); with "Analogizer" off,
 the default, the core is unchanged. The CRT gets the vertical monitor's own
 raster, unrotated, so stand the set on its side (turned clockwise). Because the
 core declares a cartridge adapter, the Pocket powers the slot: take any game

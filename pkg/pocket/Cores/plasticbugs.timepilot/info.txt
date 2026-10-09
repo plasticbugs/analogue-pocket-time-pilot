@@ -28,7 +28,9 @@ mra tool? Point it at timeplt.mra.
 Analogizer: CRT video and SNAC pads,
 set in this core's menu (Analogizer:
 On; H and V Position centre the
-picture). The CRT gets the vertical
+picture, H Size sets its width: the
+game's height with the set on its
+side). The CRT gets the vertical
 monitor's raster: stand the set on its
 side. The slot is powered: remove any
 cartridge first.
