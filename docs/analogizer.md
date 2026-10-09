@@ -107,8 +107,9 @@ player 2's turn the picture flips and the same pads play.
 adapter, so the Pocket powers the slot whether or not an Analogizer is in it.
 Do not leave a game cartridge in the slot while this core runs.
 
-**Not yet tried on hardware.** What the bench proves is listed under *What
-was measured* below. Send problems with the adapter itself to the Analogizer
+**Confirmed on a Pocket with an Analogizer and a CRT** (0.2.0, bitstream
+40de86fe); SNAC controllers not yet tried. What the bench proves is listed
+under *What was measured* below. Send problems with the adapter itself to the Analogizer
 project.
 
 ## For the developer

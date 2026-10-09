@@ -92,8 +92,8 @@ the default, the core is unchanged. The CRT gets the vertical monitor's own
 raster, unrotated, so stand the set on its side (turned clockwise). Because the
 core declares a cartridge adapter, the Pocket powers the slot: take any game
 cartridge out first. [docs/analogizer.md](docs/analogizer.md) has the modes,
-the controllers and what has been checked; it has not been tried on hardware
-yet.
+the controllers and what has been checked. Confirmed on a Pocket with an
+Analogizer and a CRT (0.2.0).
 
 First time with an adapter, in this order: "Analogizer: Off" plays exactly as
 before; then On, RGBS, the picture on the CRT (16.0 kHz, 60.6 Hz); then each
