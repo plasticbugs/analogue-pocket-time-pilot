@@ -78,10 +78,14 @@ verilator --lint-only $FLAGS -Wno-PINMISSING --top-module core_top \
     modules/sound-jt49/jt49_noise.v modules/sound-jt49/jt49_eg.v \
     modules/sound-jt49/jt49_exp.v modules/sound-jt49/jt49_cen.v \
     target/pocket/core_top.sv target/pocket/pocket_analogizer.sv \
-    target/pocket/analogizer/*.v target/pocket/analogizer/*.sv sim/ps2_keyboard_stub.v \
+    target/pocket/analogizer/*.v $(ls target/pocket/analogizer/*.sv | grep -v /yc_out_legacy.sv) \
+    sim/yc_out_legacy_stub.v sim/ps2_keyboard_stub.v \
     > "$out2" 2>&1
 set -e
 
+# yc_out_legacy.sv goes through sim/yc_out_legacy_stub.v (its sine table, a
+# wire array with an initial value, is past CI's Verilator 5.020), and
+# BLKANDNBLK in the vendored SNAC module is waived (5.020 cannot lint it).
 # RndMnkIII's Analogizer module is vendored verbatim in target/pocket/analogizer/,
 # so its findings are his, like modules/'s; the wrapper's are ours.
 top=$(grep -E '^%(Warning|Error)' "$out2" | grep -E ': *target/pocket/' \
@@ -100,9 +104,10 @@ fi
 # Verilator calls an error: PROCASSWIRE is waived for this pass.
 out3=$tmp/lint_ana.out
 set +e
-verilator --lint-only $FLAGS -Wno-PROCASSWIRE --top-module pocket_analogizer \
+verilator --lint-only $FLAGS -Wno-PROCASSWIRE -Wno-BLKANDNBLK --top-module pocket_analogizer \
     target/pocket/pocket_analogizer.sv platform/pocket/helpers/synch_3.sv \
-    target/pocket/analogizer/*.v target/pocket/analogizer/*.sv sim/ps2_keyboard_stub.v \
+    target/pocket/analogizer/*.v $(ls target/pocket/analogizer/*.sv | grep -v /yc_out_legacy.sv) \
+    sim/yc_out_legacy_stub.v sim/ps2_keyboard_stub.v \
     > "$out3" 2>&1
 set -e
 ana=$(grep -E '^%(Warning|Error)' "$out3" | grep -v 'Exiting due to' \
